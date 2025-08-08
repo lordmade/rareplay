@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RAREPLAY - Home</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --netflix-red: #E50914;
+      --netflix-gold: #FFD700;
+      --background-dark: #141414;
+      --text-dark: #FFFFFF;
+      --text-light: #B3B3B3;
+      --border-dark: #2F2F2F;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      background: var(--background-dark);
+      color: var(--text-dark);
+      min-height: 100vh;
+      margin: 0;
+      padding: 0;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      user-select: none;
+    }
+
+    .navbar {
+      background: linear-gradient(to bottom, rgba(0, 0, 0, 0.7), transparent);
+      position: fixed;
+      top: 0;
+      width: 100%;
+      z-index: 20;
+      padding: 1rem 2rem;
+    }
+
+    .nav-links a {
+      color: var(--text-dark);
+      font-weight: 500;
+      padding: 0.5rem 1rem;
+      transition: color 0.3s ease;
+    }
+
+    .nav-links a:hover {
+      color: var(--netflix-gold);
+    }
+
+    .nav-links a.active {
+      color: var(--netflix-gold);
+    }
+
+    .hamburger {
+      display: none;
+      cursor: pointer;
+    }
+
+    .hamburger div {
+      width: 25px;
+      height: 3px;
+      background: var(--text-dark);
+      margin: 5px 0;
+      transition: all 0.3s ease;
+    }
+
+    .hero {
+      position: relative;
+      height: 60vh;
+      background-size: cover;
+      background-position: center;
+      display: flex;
+      align-items: flex-end;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      animation: heroZoom 10s ease-in-out infinite;
+    }
+
+    @keyframes heroZoom {
+      0% { background-size: 100% 100%; }
+      50% { background-size: 110% 110%; }
+      100% { background-size: 100% 100%; }
+    }
+
+    .hero-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(to top, rgba(0, 0, 0, 0.3), transparent);
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 10;
+      max-width: 50%;
+    }
+
+    .movie-row {
+      margin-bottom: 2rem;
+    }
+
+    .movie-row h2 {
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin-bottom: 1rem;
+    }
+
+    .movie-row-container {
+      display: flex;
+      overflow-x: auto;
+      scroll-behavior: smooth;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .movie-row-container::-webkit-scrollbar {
+      display: none;
+    }
+
+    .movie-card {
+      flex: 0 0 auto;
+      width: 200px;
+      margin-right: 1rem;
+      position: relative;
+      border-radius: 8px;
+      overflow: hidden;
+      transition: transform 0.3s ease;
+    }
+
+    .movie-card:hover {
+      transform: scale(1.05);
+    }
+
+    .movie-card img {
+      width: 100%;
+      height: 300px;
+      object-fit: cover;
+    }
+
+    .movie-card .overlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(0, 0, 0, 0.7);
+      color: var(--text-dark);
+      padding: 0.5rem;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .movie-card:hover .overlay {
+      opacity: 1;
+    }
+
+    .play-btn {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .movie-card:hover .play-btn {
+      opacity: 1;
+    }
+
+    @media (max-width: 640px) {
+      .hero {
+        height: 50vh;
+        padding: 1rem;
+      }
+
+      .hero-content {
+        max-width: 100%;
+      }
+
+      .navbar {
+        padding: 0.5rem 1rem;
+      }
+
+      .hamburger {
+        display: block;
+      }
+
+      .nav-links {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: rgba(0, 0, 0, 0.9);
+        flex-direction: column;
+        padding: 1rem;
+      }
+
+      .nav-links.active {
+        display: flex;
+      }
+
+      .nav-links a {
+        padding: 0.5rem;
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar" role="navigation" aria-label="Main Navigation">
+    <div class="container mx-auto flex justify-between items-center">
+      <h1 class="text-2xl font-bold text-[var(--netflix-gold)]">RAREPLAY</h1>
+      <div class="hamburger" aria-label="Menu Toggle">
+        <div></div>
+        <div></div>
+        <div></div>
+      </div>
+      <div class="nav-links hidden sm:flex space-x-4">
+        <a href="home.html" class="active">Home</a>
+        <a href="#movies">Movies</a>
+        <a href="#shows">Shows</a>
+        <a href="#popular">Popular</a>
+        <a href="#my-list">My List</a>
+      </div>
+    </div>
+  </nav>
+
+  <div id="hero" class="hero"></div>
+
+  <div class="container mx-auto px-4 mt-4">
+    <div class="mb-6">
+      <label for="genre-filter" class="text-sm mr-2">Filter by Genre:</label>
+      <select id="genre-filter" class="bg-black text-white p-2 rounded">
+        <option value="all">All</option>
+        <option value="action">Action</option>
+        <option value="drama">Drama</option>
+        <option value="comedy">Comedy</option>
+        <option value="sci-fi">Sci-Fi</option>
+      </select>
+    </div>
+    <div id="movie-sections"></div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+    import { getFirestore, collection, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBOyZ3As4GTuNvjemvPF_SpsC6m6vqtNhc",
+      authDomain: "fire-b-a8878.firebaseapp.com",
+      databaseURL: "https://fire-b-a8878.firebaseio.com",
+      projectId: "fire-b-a8878",
+      storageBucket: "fire-b-a8878.firebasestorage.app",
+      messagingSenderId: "658673187627",
+      appId: "1:658673187627:web:6e4c29af661785f0afa36e",
+      measurementId: "G-V4W97VMSKL"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    async function fetchMovies(genre = "all") {
+      try {
+        const q = query(collection(db, "movies"), orderBy("title"), limit(50));
+        const snapshot = await getDocs(q);
+        const movies = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        return genre === "all" ? movies : movies.filter(movie => movie.genre === genre);
+      } catch (error) {
+        console.error("Error fetching movies:", error);
+        return [];
+      }
+    }
+
+    async function fetchFeaturedMovie() {
+      try {
+        const snapshot = await getDocs(query(collection(db, "movies"), limit(1)));
+        return snapshot.docs.length > 0 ? { id: snapshot.docs[0].id, ...snapshot.docs[0].data() } : null;
+      } catch (error) {
+        console.error("Error fetching featured movie:", error);
+        return null;
+      }
+    }
+
+    function renderHero(movie) {
+      const hero = document.getElementById("hero");
+      const bg = movie?.poster || "https://via.placeholder.com/1200x600?text=RAREPLAY+Featured";
+      const title = movie?.title || "Welcome to RAREPLAY";
+      const desc = movie?.description || "Discover amazing movies.";
+
+      hero.style.backgroundImage = `url(${bg})`;
+      hero.innerHTML = `
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+          <h1 class="text-3xl font-bold mb-2">${title}</h1>
+          <p class="text-sm mb-4">${desc}</p>
+          <div class="flex space-x-4">
+            <button class="bg-[var(--netflix-gold)] text-black px-6 py-2 rounded-full flex items-center" aria-label="Play">
+              <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+              Play
+            </button>
+            <button class="bg-transparent border border-white text-white px-6 py-2 rounded-full flex items-center" aria-label="More Info">
+              <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              More Info
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderMovieSections(movies) {
+      const sections = document.getElementById("movie-sections");
+      sections.innerHTML = "";
+      const genres = ["action", "drama", "comedy", "sci-fi"];
+      genres.forEach(genre => {
+        const genreMovies = movies.filter(movie => movie.genre === genre);
+        if (genreMovies.length === 0) return;
+        const section = document.createElement("div");
+        section.className = "movie-row";
+        section.innerHTML = `
+          <h2 class="px-4 capitalize">${genre}</h2>
+          <div class="movie-row-container">
+            ${genreMovies.map(movie => `
+              <div class="movie-card">
+                <img src="${movie.poster || 'https://via.placeholder.com/200x300?text=No+Image'}" alt="${movie.title}" loading="lazy">
+                <div class="overlay">
+                  <p class="text-sm font-semibold">${movie.title}</p>
+                </div>
+                <button class="play-btn bg-[var(--netflix-gold)] text-black p-3 rounded-full" aria-label="Play">
+                  <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                </button>
+              </div>
+            `).join("")}
+          </div>
+        `;
+        sections.appendChild(section);
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      const [movies, featuredMovie] = await Promise.all([fetchMovies(), fetchFeaturedMovie()]);
+      renderMovieSections(movies);
+      renderHero(featuredMovie);
+
+      document.querySelector(".hamburger").addEventListener("click", () => {
+        const navLinks = document.querySelector(".nav-links");
+        navLinks.classList.toggle("hidden");
+        navLinks.classList.toggle("flex");
+      });
+
+      document.getElementById("genre-filter").addEventListener("change", async (e) => {
+        const filtered = await fetchMovies(e.target.value);
+        renderMovieSections(filtered);
+      });
+    });
+  </script>
+</body>
+</html>
