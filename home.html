@@ -43,10 +43,7 @@
       transition: color 0.3s ease;
     }
 
-    .nav-links a:hover {
-      color: var(--netflix-gold);
-    }
-
+    .nav-links a:hover,
     .nav-links a.active {
       color: var(--netflix-gold);
     }
@@ -88,7 +85,7 @@
       left: 0;
       right: 0;
       bottom: 0;
-      background: linear-gradient(to top, rgba(0, 0, 0, 0.3), transparent);
+      background: linear-gradient(to top, rgba(0, 0, 0, 0.4), transparent);
     }
 
     .hero-content {
@@ -178,10 +175,6 @@
         max-width: 100%;
       }
 
-      .navbar {
-        padding: 0.5rem 1rem;
-      }
-
       .hamburger {
         display: block;
       }
@@ -209,7 +202,7 @@
   </style>
 </head>
 <body>
-  <nav class="navbar" role="navigation" aria-label="Main Navigation">
+  <nav class="navbar">
     <div class="container mx-auto flex justify-between items-center">
       <h1 class="text-2xl font-bold text-[var(--netflix-gold)]">RAREPLAY</h1>
       <div class="hamburger" aria-label="Menu Toggle">
@@ -230,16 +223,6 @@
   <div id="hero" class="hero"></div>
 
   <div class="container mx-auto px-4 mt-4">
-    <div class="mb-6">
-      <label for="genre-filter" class="text-sm mr-2">Filter by Genre:</label>
-      <select id="genre-filter" class="bg-black text-white p-2 rounded">
-        <option value="all">All</option>
-        <option value="action">Action</option>
-        <option value="drama">Drama</option>
-        <option value="comedy">Comedy</option>
-        <option value="sci-fi">Sci-Fi</option>
-      </select>
-    </div>
     <div id="movie-sections"></div>
   </div>
 
@@ -261,12 +244,13 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    async function fetchMovies(genre = "all") {
+    const defaultHeroImage = "https://i.postimg.cc/JhCV8dBz/3d-rendering-person-watching-movie.jpg";
+
+    async function fetchMovies() {
       try {
         const q = query(collection(db, "movies"), orderBy("title"), limit(50));
         const snapshot = await getDocs(q);
-        const movies = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        return genre === "all" ? movies : movies.filter(movie => movie.genre === genre);
+        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       } catch (error) {
         console.error("Error fetching movies:", error);
         return [];
@@ -285,7 +269,7 @@
 
     function renderHero(movie) {
       const hero = document.getElementById("hero");
-      const bg = movie?.poster || "https://via.placeholder.com/1200x600?text=RAREPLAY+Featured";
+      const bg = movie?.poster || defaultHeroImage;
       const title = movie?.title || "Welcome to RAREPLAY";
       const desc = movie?.description || "Discover amazing movies.";
 
@@ -296,19 +280,18 @@
           <h1 class="text-3xl font-bold mb-2">${title}</h1>
           <p class="text-sm mb-4">${desc}</p>
           <div class="flex space-x-4">
-            <button class="bg-[var(--netflix-gold)] text-black px-6 py-2 rounded-full flex items-center" aria-label="Play">
+            <button class="bg-[var(--netflix-gold)] text-black px-6 py-2 rounded-full flex items-center">
               <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
               Play
             </button>
-            <button class="bg-transparent border border-white text-white px-6 py-2 rounded-full flex items-center" aria-label="More Info">
+            <button class="bg-transparent border border-white text-white px-6 py-2 rounded-full flex items-center">
               <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
               </svg>
               More Info
             </button>
           </div>
-        </div>
-      `;
+        </div>`;
     }
 
     function renderMovieSections(movies) {
@@ -329,13 +312,12 @@
                 <div class="overlay">
                   <p class="text-sm font-semibold">${movie.title}</p>
                 </div>
-                <button class="play-btn bg-[var(--netflix-gold)] text-black p-3 rounded-full" aria-label="Play">
+                <button class="play-btn bg-[var(--netflix-gold)] text-black p-3 rounded-full">
                   <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                 </button>
               </div>
             `).join("")}
-          </div>
-        `;
+          </div>`;
         sections.appendChild(section);
       });
     }
@@ -349,11 +331,6 @@
         const navLinks = document.querySelector(".nav-links");
         navLinks.classList.toggle("hidden");
         navLinks.classList.toggle("flex");
-      });
-
-      document.getElementById("genre-filter").addEventListener("change", async (e) => {
-        const filtered = await fetchMovies(e.target.value);
-        renderMovieSections(filtered);
       });
     });
   </script>
