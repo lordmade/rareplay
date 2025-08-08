@@ -131,6 +131,23 @@
       color: var(--text-light);
     }
 
+    .notification-container {
+      display: flex;
+      align-items: center;
+      margin-left: 0.5rem;
+    }
+
+    .notification-container svg {
+      width: 20px;
+      height: 20px;
+      color: var(--text-light);
+      transition: color 0.3s ease;
+    }
+
+    .notification-container svg:hover {
+      color: var(--netflix-gold);
+    }
+
     .hero {
       position: relative;
       height: 60vh;
@@ -376,6 +393,11 @@
         height: 18px;
         right: 0.5rem;
       }
+
+      .notification-container svg {
+        width: 18px;
+        height: 18px;
+      }
     }
 
     @media (min-width: 641px) {
@@ -440,6 +462,11 @@
               <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
             </svg>
           </div>
+          <div class="notification-container" aria-label="Notifications">
+            <svg fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.1-1.6-5.6-4.5-6.3V4c0-.8-.7-1.5-1.5-1.5h-1c-.8 0-1.5.7-1.5 1.5v.7C7.6 5.4 6 7.9 6 11v5l-2 2v1h16v-1l-2-2z"/>
+            </svg>
+          </div>
           <div class="user-profile" id="user-profile-desktop"></div>
         </div>
       </div>
@@ -448,11 +475,18 @@
 
   <header class="mobile-header">
     <h1 class="text-xl font-bold text-[var(--netflix-gold)]">RAREPLAY</h1>
-    <div class="search-container">
-      <input type="text" id="search-mobile" placeholder="Search..." aria-label="Search movies">
-      <svg fill="currentColor" viewBox="0 0 24 24">
-        <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
-      </svg>
+    <div class="flex items-center gap-2">
+      <div class="search-container">
+        <input type="text" id="search-mobile" placeholder="Search..." aria-label="Search movies">
+        <svg fill="currentColor" viewBox="0 0 24 24">
+          <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+        </svg>
+      </div>
+      <div class="notification-container" aria-label="Notifications">
+        <svg fill="currentColor" viewBox="0 0 24 24">
+          <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.1-1.6-5.6-4.5-6.3V4c0-.8-.7-1.5-1.5-1.5h-1c-.8 0-1.5.7-1.5 1.5v.7C7.6 5.4 6 7.9 6 11v5l-2 2v1h16v-1l-2-2z"/>
+        </svg>
+      </div>
     </div>
   </header>
 
