@@ -30,7 +30,7 @@
     }
 
     .navbar {
-      background: linear-gradient(to bottom, rgba(0, 0, 0, 0.7), transparent);
+      background: transparent;
       position: fixed;
       top: 0;
       width: 100%;
@@ -43,7 +43,7 @@
       position: fixed;
       top: 0;
       width: 100%;
-      background: rgba(0, 0, 0, 0.9);
+      background: transparent;
       z-index: 20;
       padding: 0.75rem 1rem;
     }
@@ -237,8 +237,61 @@
       opacity: 1;
     }
 
-    #loading svg {
-      color: var(--netflix-gold);
+    .spinner-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .spinner {
+      position: relative;
+      width: 60px;
+      height: 60px;
+    }
+
+    .spinner-ring {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border: 4px solid transparent;
+      border-top-color: var(--netflix-gold);
+      border-radius: 50%;
+      animation: spin 1.5s linear infinite;
+    }
+
+    .spinner-ring:nth-child(2) {
+      width: 80%;
+      height: 80%;
+      top: 10%;
+      left: 10%;
+      animation-delay: -0.3s;
+      border-top-color: rgba(255, 215, 0, 0.7);
+    }
+
+    .spinner-ring:nth-child(3) {
+      width: 60%;
+      height: 60%;
+      top: 20%;
+      left: 20%;
+      animation-delay: -0.6s;
+      border-top-color: rgba(255, 215, 0, 0.4);
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .spinner-text {
+      color: var(--text-light);
+      font-size: 1rem;
+      animation: pulse 1.5s ease-in-out infinite;
     }
 
     #no-more {
@@ -434,10 +487,14 @@
   <div class="container mx-auto px-4 mt-4">
     <div id="movie-sections"></div>
     <div id="loading" class="hidden text-center py-4">
-      <svg class="animate-spin h-8 w-8 text-[var(--netflix-gold)] mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0l4 4-4 4z"></path>
-      </svg>
+      <div class="spinner-container">
+        <div class="spinner">
+          <div class="spinner-ring"></div>
+          <div class="spinner-ring"></div>
+          <div class="spinner-ring"></div>
+        </div>
+        <p class="spinner-text">Loading movies...</p>
+      </div>
     </div>
     <p id="no-more" class="hidden text-center py-4 text-[var(--text-light)]">No more movies to load.</p>
   </div>
@@ -471,7 +528,7 @@
       const desktopProfile = document.getElementById("user-profile-desktop");
       const mobileProfile = document.getElementById("user-profile-mobile");
       const displayName = user ? user.displayName || user.email || "User" : "Guest";
-      const photoURL = user?.photoURL;
+      const photoURL = user ? user.photoURL : null;
       const initial = displayName.charAt(0).toUpperCase();
       const avatarHTML = photoURL 
         ? `<img src="${photoURL}" alt="Profile picture" class="avatar">`
@@ -482,25 +539,28 @@
       `;
 
       if (desktopProfile) desktopProfile.innerHTML = profileHTML;
-      mobileProfile.innerHTML = profileHTML;
+      if (mobileProfile) mobileProfile.innerHTML = profileHTML;
 
       if (user) {
-        document.getElementById("logout")?.addEventListener("click", async e => {
-          e.preventDefault();
-          try {
-            await signOut(auth);
-          } catch (error) {
-            console.error("Error signing out:", error);
-          }
-        });
+        const logoutButton = document.getElementById("logout");
+        if (logoutButton) {
+          logoutButton.addEventListener("click", async e => {
+            e.preventDefault();
+            try {
+              await signOut(auth);
+            } catch (error) {
+              console.error("Error signing out:", error);
+            }
+          });
+        }
       }
     }
 
     async function fetchMovies(searchQuery = "") {
       const loading = document.getElementById("loading");
       const noMore = document.getElementById("no-more");
-      loading.classList.remove("hidden");
-      noMore.classList.add("hidden");
+      if (loading) loading.classList.remove("hidden");
+      if (noMore) noMore.classList.add("hidden");
 
       try {
         let dbQuery = query(ref(db, "movies"), orderByChild("title"), limitToFirst(moviesPerPage));
@@ -519,17 +579,21 @@
           lastVisibleKey = movies.length > 0 ? movies[movies.length - 1].title : null;
           hasMoreMovies = movies.length === moviesPerPage;
         }
-        loading.classList.add("hidden");
+        if (loading) loading.classList.add("hidden");
         if (movies.length === 0 && !hasMoreMovies) {
-          noMore.classList.remove("hidden");
-          noMore.textContent = searchQuery ? "No movies found." : "No more movies to load.";
+          if (noMore) {
+            noMore.classList.remove("hidden");
+            noMore.textContent = searchQuery ? "No movies found." : "No more movies to load.";
+          }
         }
         return movies;
       } catch (error) {
         console.error("Error fetching movies:", error);
-        loading.classList.add("hidden");
-        noMore.classList.remove("hidden");
-        noMore.textContent = "Failed to load movies. Please try again later.";
+        if (loading) loading.classList.add("hidden");
+        if (noMore) {
+          noMore.classList.remove("hidden");
+          noMore.textContent = "Failed to load movies. Please try again later.";
+        }
         return [];
       }
     }
@@ -550,9 +614,11 @@
 
     function renderHero(movie) {
       const hero = document.getElementById("hero");
-      const bg = movie?.poster || defaultHeroImage;
-      const title = movie?.title || "Welcome to RAREPLAY";
-      const desc = movie?.description || "Discover amazing local Movies, Shows, Music, News & More...";
+      if (!hero) return;
+
+      const bg = movie && movie.poster ? movie.poster : defaultHeroImage;
+      const title = movie && movie.title ? movie.title : "Welcome to RAREPLAY";
+      const desc = movie && movie.description ? movie.description : "Discover amazing local Movies, Shows, Music, News & More...";
 
       hero.style.backgroundImage = `url(${bg})`;
       hero.innerHTML = `
@@ -577,6 +643,7 @@
 
     function renderMovieSections(movies, append = false) {
       const sections = document.getElementById("movie-sections");
+      if (!sections) return;
       if (!append) sections.innerHTML = "";
       const genres = [...new Set(movies.map(movie => movie.genre))];
       genres.forEach(genre => {
@@ -591,28 +658,31 @@
           sections.appendChild(section);
         }
         const container = section.querySelector(".movie-row-container");
-        container.innerHTML += genreMovies
-          .map(
-            movie => `
-              <div class="movie-card">
-                <img src="${movie.poster || 'https://via.placeholder.com/200x300?text=No+Image'}" alt="${movie.title}" loading="lazy">
-                <div class="overlay">
-                  <p class="text-sm font-semibold">${movie.title}</p>
-                </div>
-                <button class="play-btn bg-[var(--netflix-gold)] text-black p-3 rounded-full" aria-label="Play ${movie.title}">
-                  <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                </button>
-              </div>`
-          )
-          .join("");
+        if (container) {
+          container.innerHTML += genreMovies
+            .map(
+              movie => `
+                <div class="movie-card">
+                  <img src="${movie.poster || 'https://via.placeholder.com/200x300?text=No+Image'}" alt="${movie.title}" loading="lazy">
+                  <div class="overlay">
+                    <p class="text-sm font-semibold">${movie.title}</p>
+                  </div>
+                  <button class="play-btn bg-[var(--netflix-gold)] text-black p-3 rounded-full" aria-label="Play ${movie.title}">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                  </button>
+                </div>`
+            )
+            .join("");
+        }
       });
       if (!hasMoreMovies) {
-        document.getElementById("no-more").classList.remove("hidden");
+        const noMore = document.getElementById("no-more");
+        if (noMore) noMore.classList.remove("hidden");
       }
     }
 
     function debounce(func, wait) {
-      let timeout;
+      let timeout = null;
       return function executedFunction(...args) {
         const later = () => {
           clearTimeout(timeout);
@@ -639,8 +709,10 @@
       if (hamburger) {
         hamburger.addEventListener("click", () => {
           const navLinks = document.querySelector(".nav-links");
-          hamburger.classList.toggle("active");
-          navLinks.classList.toggle("active");
+          if (navLinks) {
+            hamburger.classList.toggle("active");
+            navLinks.classList.toggle("active");
+          }
         });
       }
 
@@ -671,7 +743,8 @@
         { rootMargin: "200px" }
       );
 
-      observer.observe(document.getElementById("loading"));
+      const loading = document.getElementById("loading");
+      if (loading) observer.observe(loading);
     });
   </script>
 </body>
