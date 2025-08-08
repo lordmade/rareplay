@@ -61,6 +61,18 @@
       transition: all 0.3s ease;
     }
 
+    .hamburger.active div:nth-child(1) {
+      transform: rotate(45deg) translate(5px, 5px);
+    }
+
+    .hamburger.active div:nth-child(2) {
+      opacity: 0;
+    }
+
+    .hamburger.active div:nth-child(3) {
+      transform: rotate(-45deg) translate(7px, -7px);
+    }
+
     .hero {
       position: relative;
       height: 60vh;
@@ -118,7 +130,9 @@
 
     .movie-card {
       flex: 0 0 auto;
-      width: 200px;
+      width: 40vw;
+      max-width: 200px;
+      min-width: 150px;
       margin-right: 1rem;
       position: relative;
       border-radius: 8px;
@@ -165,6 +179,43 @@
       opacity: 1;
     }
 
+    #loading svg {
+      color: var(--netflix-gold);
+    }
+
+    #no-more {
+      color: var(--text-light);
+      font-size: 1rem;
+    }
+
+    .user-profile {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .user-profile img {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .user-profile span {
+      color: var(--text-dark);
+      font-weight: 500;
+    }
+
+    .user-profile a {
+      color: var(--text-light);
+      font-size: 0.9rem;
+      padding: 0.5rem;
+    }
+
+    .user-profile a:hover {
+      color: var(--netflix-gold);
+    }
+
     @media (max-width: 640px) {
       .hero {
         height: 50vh;
@@ -198,6 +249,17 @@
         padding: 0.5rem;
         font-size: 1rem;
       }
+
+      .user-profile {
+        display: none;
+      }
+
+      .nav-links.active .user-profile {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 0.5rem;
+      }
     }
   </style>
 </head>
@@ -205,17 +267,20 @@
   <nav class="navbar">
     <div class="container mx-auto flex justify-between items-center">
       <h1 class="text-2xl font-bold text-[var(--netflix-gold)]">RAREPLAY</h1>
-      <div class="hamburger" aria-label="Menu Toggle">
-        <div></div>
-        <div></div>
-        <div></div>
-      </div>
-      <div class="nav-links hidden sm:flex space-x-4">
-        <a href="home.html" class="active">Home</a>
-        <a href="#movies">Movies</a>
-        <a href="#shows">Shows</a>
-        <a href="#popular">Popular</a>
-        <a href="#my-list">My List</a>
+      <div class="flex items-center space-x-4">
+        <div class="hamburger" aria-label="Menu Toggle">
+          <div></div>
+          <div></div>
+          <div></div>
+        </div>
+        <div class="nav-links hidden sm:flex space-x-4 items-center">
+          <a href="home.html" class="active">Home</a>
+          <a href="#movies">Movies</a>
+          <a href="#shows">Shows</a>
+          <a href="#popular">Popular</a>
+          <a href="#my-list">My List</a>
+          <div class="user-profile" id="user-profile-mobile"></div>
+        </div>
       </div>
     </div>
   </nav>
@@ -224,11 +289,19 @@
 
   <div class="container mx-auto px-4 mt-4">
     <div id="movie-sections"></div>
+    <div id="loading" class="hidden text-center py-4">
+      <svg class="animate-spin h-8 w-8 text-[var(--netflix-gold)] mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0l4 4-4 4z"></path>
+      </svg>
+    </div>
+    <p id="no-more" class="hidden text-center py-4 text-[var(--text-light)]">No more movies to load.</p>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-    import { getFirestore, collection, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+    import { getDatabase, ref, query, orderByChild, limitToFirst, startAfter, get } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBOyZ3As4GTuNvjemvPF_SpsC6m6vqtNhc",
@@ -242,25 +315,77 @@
     };
 
     const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+    const db = getDatabase(app);
+    const auth = getAuth(app);
 
     const defaultHeroImage = "https://i.postimg.cc/JhCV8dBz/3d-rendering-person-watching-movie.jpg";
+    const moviesPerPage = 10;
+    let lastVisibleKey = null;
+    let hasMoreMovies = true;
+
+    function renderUserProfile(user) {
+      const desktopProfile = document.getElementById("user-profile-desktop");
+      const mobileProfile = document.getElementById("user-profile-mobile");
+      const displayName = user ? user.displayName || user.email || "User" : "Guest";
+      const photoURL = user?.photoURL || "https://via.placeholder.com/32?text=U";
+      const profileHTML = `
+        ${user ? `<img src="${photoURL}" alt="Profile picture" class="rounded-full">` : ""}
+        <span>${displayName}</span>
+        ${user ? `<a href="#" id="logout" class="hover:text-[var(--netflix-gold)]">Logout</a>` : ""}
+      `;
+
+      desktopProfile.innerHTML = profileHTML;
+      mobileProfile.innerHTML = profileHTML;
+
+      if (user) {
+        document.getElementById("logout")?.addEventListener("click", async e => {
+          e.preventDefault();
+          try {
+            await signOut(auth);
+          } catch (error) {
+            console.error("Error signing out:", error);
+          }
+        });
+      }
+    }
 
     async function fetchMovies() {
+      const loading = document.getElementById("loading");
+      const noMore = document.getElementById("no-more");
+      loading.classList.remove("hidden");
+      noMore.classList.add("hidden");
+
       try {
-        const q = query(collection(db, "movies"), orderBy("title"), limit(50));
-        const snapshot = await getDocs(q);
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        let dbQuery = query(ref(db, "movies"), orderByChild("title"), limitToFirst(moviesPerPage));
+        if (lastVisibleKey) {
+          dbQuery = query(ref(db, "movies"), orderByChild("title"), limitToFirst(moviesPerPage), startAfter(lastVisibleKey));
+        }
+        const snapshot = await get(dbQuery);
+        const movies = [];
+        snapshot.forEach(child => {
+          movies.push({ id: child.key, ...child.val() });
+        });
+        lastVisibleKey = movies.length > 0 ? movies[movies.length - 1].title : null;
+        hasMoreMovies = movies.length === moviesPerPage;
+        loading.classList.add("hidden");
+        return movies;
       } catch (error) {
         console.error("Error fetching movies:", error);
+        loading.classList.add("hidden");
+        noMore.classList.remove("hidden");
+        noMore.textContent = "Failed to load movies. Please try again later.";
         return [];
       }
     }
 
     async function fetchFeaturedMovie() {
       try {
-        const snapshot = await getDocs(query(collection(db, "movies"), limit(1)));
-        return snapshot.docs.length > 0 ? { id: snapshot.docs[0].id, ...snapshot.docs[0].data() } : null;
+        const snapshot = await get(query(ref(db, "movies"), orderByChild("title"), limitToFirst(1)));
+        let movie = null;
+        snapshot.forEach(child => {
+          movie = { id: child.key, ...child.val() };
+        });
+        return movie;
       } catch (error) {
         console.error("Error fetching featured movie:", error);
         return null;
@@ -271,7 +396,7 @@
       const hero = document.getElementById("hero");
       const bg = movie?.poster || defaultHeroImage;
       const title = movie?.title || "Welcome to RAREPLAY";
-      const desc = movie?.description || "Discover amazing local Movies , Shows, Music , News & More...";
+      const desc = movie?.description || "Discover amazing local Movies, Shows, Music, News & More...";
 
       hero.style.backgroundImage = `url(${bg})`;
       hero.innerHTML = `
@@ -280,11 +405,11 @@
           <h1 class="text-3xl font-bold mb-2">${title}</h1>
           <p class="text-sm mb-4">${desc}</p>
           <div class="flex space-x-4">
-            <button class="bg-[var(--netflix-gold)] text-black px-6 py-2 rounded-full flex items-center">
+            <button class="bg-[var(--netflix-gold)] text-black px-6 py-2 rounded-full flex items-center" aria-label="Play ${title}">
               <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
               Play
             </button>
-            <button class="bg-transparent border border-white text-white px-6 py-2 rounded-full flex items-center">
+            <button class="bg-transparent border border-white text-white px-6 py-2 rounded-full flex items-center" aria-label="More info about ${title}">
               <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
               </svg>
@@ -294,44 +419,87 @@
         </div>`;
     }
 
-    function renderMovieSections(movies) {
+    function renderMovieSections(movies, append = false) {
       const sections = document.getElementById("movie-sections");
-      sections.innerHTML = "";
-      const genres = ["action", "drama", "comedy", "sci-fi"];
+      if (!append) sections.innerHTML = "";
+      const genres = [...new Set(movies.map(movie => movie.genre))];
       genres.forEach(genre => {
         const genreMovies = movies.filter(movie => movie.genre === genre);
         if (genreMovies.length === 0) return;
-        const section = document.createElement("div");
-        section.className = "movie-row";
-        section.innerHTML = `
-          <h2 class="px-4 capitalize">${genre}</h2>
-          <div class="movie-row-container">
-            ${genreMovies.map(movie => `
+        let section = sections.querySelector(`[data-genre="${genre}"]`);
+        if (!section) {
+          section = document.createElement("div");
+          section.className = "movie-row";
+          section.dataset.genre = genre;
+          section.innerHTML = `<h2 class="px-4 capitalize">${genre}</h2><div class="movie-row-container"></div>`;
+          sections.appendChild(section);
+        }
+        const container = section.querySelector(".movie-row-container");
+        container.innerHTML += genreMovies
+          .map(
+            movie => `
               <div class="movie-card">
                 <img src="${movie.poster || 'https://via.placeholder.com/200x300?text=No+Image'}" alt="${movie.title}" loading="lazy">
                 <div class="overlay">
                   <p class="text-sm font-semibold">${movie.title}</p>
                 </div>
-                <button class="play-btn bg-[var(--netflix-gold)] text-black p-3 rounded-full">
+                <button class="play-btn bg-[var(--netflix-gold)] text-black p-3 rounded-full" aria-label="Play ${movie.title}">
                   <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                 </button>
-              </div>
-            `).join("")}
-          </div>`;
-        sections.appendChild(section);
+              </div>`
+          )
+          .join("");
       });
+      if (!hasMoreMovies) {
+        document.getElementById("no-more").classList.remove("hidden");
+      }
+    }
+
+    function debounce(func, wait) {
+      let timeout;
+      return function executedFunction(...args) {
+        const later = () => {
+          clearTimeout(timeout);
+          func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+      };
     }
 
     document.addEventListener("DOMContentLoaded", async () => {
+      // Listen for auth state changes
+      onAuthStateChanged(auth, user => {
+        renderUserProfile(user);
+      });
+
+      // Initial load of movies and featured movie
       const [movies, featuredMovie] = await Promise.all([fetchMovies(), fetchFeaturedMovie()]);
       renderMovieSections(movies);
       renderHero(featuredMovie);
 
+      // Hamburger menu toggle
       document.querySelector(".hamburger").addEventListener("click", () => {
         const navLinks = document.querySelector(".nav-links");
-        navLinks.classList.toggle("hidden");
-        navLinks.classList.toggle("flex");
+        const hamburger = document.querySelector(".hamburger");
+        navLinks.classList.toggle("active");
+        hamburger.classList.toggle("active");
       });
+
+      // Infinite scroll
+      const observer = new IntersectionObserver(
+        entries => {
+          if (entries[0].isIntersecting && hasMoreMovies) {
+            debounce(async () => {
+              const newMovies = await fetchMovies();
+              renderMovieSections(newMovies, true);
+            }, 200)();
+          }
+        },
+        { rootMargin: "200px" }
+      );
+
+      observer.observe(document.getElementById("loading"));
     });
   </script>
 </body>
