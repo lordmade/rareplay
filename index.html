@@ -8,24 +8,12 @@
   <style>
     :root {
       --netflix-red: #E50914;
-      --background-dark: #141414;
-      --text-dark: #FFFFFF;
-      --text-light: #B3B3B3;
-      --border-dark: #2F2F2F;
-      --white-dark: #1C2526;
-    }
-
-    [data-theme="dark"] {
-      --background: var(--background-dark);
-      --text-dark: var(--text-dark-dark);
-      --text-light: var(--text-light-dark);
-      --border: var(--border-dark);
-      --white: var(--white-dark);
+      --text-light: #666666;
     }
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-      background: var(--background-dark);
+      background: white;
       min-height: 100vh;
       margin: 0;
       padding: 0;
@@ -34,6 +22,138 @@
       align-items: center;
       overflow: hidden;
       transition: opacity 0.5s ease;
+      user-select: none;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      -webkit-touch-callout: none;
+    }
+
+    body.fade-out {
+      opacity: 0;
+    }
+
+    .splash-container {
+      text-align: center;
+      position: relative;
+      z-index: 10;
+    }
+
+    .logo-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .logo-text {
+      color: gold;
+      font-size: 4rem;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      animation: fadeInScale 1.5s ease-out forwards;
+      text-shadow: 2px 2px 4px black;
+    }
+
+    .loader {
+      display: flex;
+      gap: 8px;
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      background: var(--netflix-red);
+      border-radius: 50%;
+      animation: pulse 1.2s ease-in-out infinite;
+    }
+
+    .dot:nth-child(2) { animation-delay: 0.2s; }
+    .dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 0.8; }
+      50% { transform: scale(1.5); opacity: 0.4; }
+    }
+
+    @keyframes fadeInScale {
+      0% { opacity: 0; transform: scale(0.7); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    .splash-text {
+      color: var(--text-light);
+      font-weight: 500;
+      font-size: 1.25rem;
+      letter-spacing: 0.5px;
+      animation: fadeInUp 1s ease-out 0.5s forwards;
+      opacity: 0;
+    }
+
+    @keyframes fadeInUp {
+      0% { opacity: 0; transform: translateY(20px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 640px) {
+      .logo-text { font-size: 2.5rem; }
+      .loader { gap: 6px; }
+      .dot { width: 10px; height: 10px; }
+      .splash-text { font-size: 1rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="splash-container">
+    <div class="logo-container">
+      <div class="logo-text">RAREPLAY</div>
+      <div class="loader">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </div>
+    </div>
+    <p class="splash-text">Your Movies, Your Way...</p>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBOyZ3As4GTuNvjemvPF_SpsC6m6vqtNhc",
+      authDomain: "fire-b-a8878.firebaseapp.com",
+      databaseURL: "https://fire-b-a8878.firebaseio.com",
+      projectId: "fire-b-a8878",
+      storageBucket: "fire-b-a8878.firebasestorage.app",
+      messagingSenderId: "658673187627",
+      appId: "1:658673187627:web:6e4c29af661785f0afa36e",
+      measurementId: "G-V4W97VMSKL"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    async function checkAuthState() {
+      try {
+        await setPersistence(auth, browserLocalPersistence);
+        onAuthStateChanged(auth, (user) => {
+          const destination = user ? "home.html" : "signup.html";
+          document.body.classList.add("fade-out");
+          setTimeout(() => {
+            window.location.href = destination;
+          }, 2000);
+        });
+      } catch (error) {
+        console.error("Auth error:", error);
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", checkAuthState);
+  </script>
+</body>
+</html>
       user-select: none;
       -webkit-user-select: none;
       -moz-user-select: none;
