@@ -22,7 +22,7 @@
       min-height: 100vh;
       margin: 0;
       padding: 0;
-      padding-bottom: 3.5rem; /* Space for bottom navbar on mobile */
+      padding-bottom: 4.5rem; /* Space for floating bottom navbar on mobile */
       -webkit-user-select: none;
       -webkit-touch-callout: none;
       user-select: none;
@@ -40,9 +40,12 @@
     .bottom-navbar {
       display: none;
       position: fixed;
-      bottom: 0;
-      width: 100%;
-      background: rgba(0, 0, 0, 0.9);
+      bottom: 1rem;
+      left: 1rem;
+      right: 1rem;
+      background: rgba(20, 20, 20, 0.95);
+      border-radius: 1rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
       z-index: 20;
       padding: 0.5rem 0;
     }
