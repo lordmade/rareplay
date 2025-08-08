@@ -22,8 +22,8 @@
       min-height: 100vh;
       margin: 0;
       padding: 0;
-      padding-bottom: 4.5rem; /* Space for floating bottom navbar on mobile */
-      padding-top: 4rem; /* Space for top header on mobile */
+      padding-bottom: 4.5rem;
+      padding-top: 4rem;
       -webkit-user-select: none;
       -webkit-touch-callout: none;
       user-select: none;
@@ -213,6 +213,7 @@
       border-radius: 8px;
       overflow: hidden;
       transition: transform 0.3s ease;
+      cursor: pointer;
     }
 
     .movie-card:hover {
@@ -241,17 +242,44 @@
       opacity: 1;
     }
 
-    .play-btn {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      opacity: 0;
-      transition: opacity 0.3s ease;
+    .video-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.9);
+      z-index: 30;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
     }
 
-    .movie-card:hover .play-btn {
-      opacity: 1;
+    .video-modal.show {
+      display: flex;
+    }
+
+    .video-modal video {
+      max-width: 90%;
+      max-height: 80vh;
+      border-radius: 8px;
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: var(--netflix-gold);
+      color: black;
+      padding: 0.5rem 1rem;
+      border-radius: 9999px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .close-btn:hover {
+      background: #d4b000;
     }
 
     .spinner-container {
@@ -533,6 +561,11 @@
     <p id="no-more" class="hidden text-center py-4 text-[var(--text-light)]">No more movies to load.</p>
   </div>
 
+  <div id="video-modal" class="video-modal">
+    <button class="close-btn" aria-label="Close video player">Close</button>
+    <video id="video-player" controls></video>
+  </div>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
     import { getDatabase, ref, query, orderByChild, limitToFirst, startAfter, get } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js";
@@ -697,14 +730,11 @@
           container.innerHTML += genreMovies
             .map(
               movie => `
-                <div class="movie-card">
+                <div class="movie-card" data-video="${movie.videoUrl || ''}">
                   <img src="${movie.poster || 'https://via.placeholder.com/200x300?text=No+Image'}" alt="${movie.title}" loading="lazy">
                   <div class="overlay">
                     <p class="text-sm font-semibold">${movie.title}</p>
                   </div>
-                  <button class="play-btn bg-[var(--netflix-gold)] text-black p-3 rounded-full" aria-label="Play ${movie.title}">
-                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                  </button>
                 </div>`
             )
             .join("");
@@ -714,6 +744,22 @@
         const noMore = document.getElementById("no-more");
         if (noMore) noMore.classList.remove("hidden");
       }
+
+      // Add click event listeners to movie cards
+      document.querySelectorAll(".movie-card").forEach(card => {
+        card.addEventListener("click", () => {
+          const videoUrl = card.dataset.video;
+          if (videoUrl) {
+            const videoPlayer = document.getElementById("video-player");
+            const videoModal = document.getElementById("video-modal");
+            if (videoPlayer && videoModal) {
+              videoPlayer.src = videoUrl;
+              videoModal.classList.add("show");
+              videoPlayer.play();
+            }
+          }
+        });
+      });
     }
 
     function debounce(func, wait) {
@@ -760,7 +806,7 @@
       const searchMobile = document.getElementById("search-mobile");
       const handleSearch = debounce(async (event) => {
         const query = event.target.value.trim();
-        lastVisibleKey = null; // Reset pagination for search
+        lastVisibleKey = null;
         hasMoreMovies = true;
         const movies = await fetchMovies(query);
         renderMovieSections(movies);
@@ -784,6 +830,20 @@
 
       const loading = document.getElementById("loading");
       if (loading) observer.observe(loading);
+
+      // Video modal close functionality
+      const closeBtn = document.querySelector(".close-btn");
+      const videoModal = document.getElementById("video-modal");
+      const videoPlayer = document.getElementById("video-player");
+      if (closeBtn) {
+        closeBtn.addEventListener("click", () => {
+          if (videoModal && videoPlayer) {
+            videoPlayer.pause();
+            videoPlayer.src = "";
+            videoModal.classList.remove("show");
+          }
+        });
+      }
     });
   </script>
 </body>
