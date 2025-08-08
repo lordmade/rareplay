@@ -229,6 +229,7 @@
       color: var(--text-light);
       font-size: 0.75rem;
       padding: 0.25rem;
+      transition: color 0.3s ease;
     }
 
     .user-profile a:hover {
@@ -286,7 +287,16 @@
 
       .user-profile a {
         font-size: 0.9rem;
-        padding: 0.5rem;
+        padding: 0.5rem 1rem;
+        background-color: var(--netflix-gold);
+        color: black;
+        border-radius: 9999px; /* Pill shape */
+        transition: background-color 0.3s ease;
+      }
+
+      .user-profile a:hover {
+        background-color: #d4b000; /* Slightly darker gold on hover */
+        color: black;
       }
     }
   </style>
